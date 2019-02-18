@@ -1,11 +1,14 @@
-﻿using System;
+﻿using Emgu.CV;
+using Emgu.CV.Structure;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using static Tron.Helper;
 
@@ -16,26 +19,32 @@ namespace Tron
 
         public List<Process> Processes { get; set; }
         public Process CurrentProcess { get; set; }
+        public BackgroundWorker worker;
 
         public Form1()
         {
             InitializeComponent();
             Processes = new List<Process>();
-
-            this.Initialize();
+            Initialize();
         }
 
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
-            //Processes = Process.GetProcesses().OrderBy(c=> c.ProcessName).ToList();
-
+            //Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
             Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
-            this.bindingSource1.DataSource = this.Processes;
-            this.listBoxProcess.DisplayMember = "ProcessName";
+            bindingSource1.DataSource = Processes;
+            listBoxProcess.DisplayMember = "ProcessName";
+
+            worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = true;
+
+            // Startet den Worker
+            worker.DoWork += new DoWorkEventHandler(worker_DoWork);
         }
 
-        private void btnStartConnect_Click(object sender, EventArgs e)
+        public Bitmap AnalyzeCurrentProgress()
         {
             try
             {
@@ -49,35 +58,103 @@ namespace Tron
                     int bottom = rect.bottom;
                     int top = rect.top;
 
-
-                    // currentSize
-                    Size size = new Size(rect.right - rect.left,
-                             rect.bottom - rect.top);
-
-                    rect.left = 0;
-                    rect.right = 640;
-
-                    rect.bottom = 480;
-                    rect.top = 0;
-
-                    Size size2 = new Size(rect.right - rect.left,
-                             rect.bottom - rect.top);
-
-                    MoveWindow(ptr1, 100, 100, size2.Width, size2.Height, true);
-
+                    MoveWindow(ptr1, 200, 200, 640, 480, true);
                 }
-                this.pictureBox3.Image = Helper.createBitmap(ptr1, Size.Width, Size.Height);
+                else
+                {
+                    return null;
+                }
+
+                //Bitmap btmp = Helper.createBitmap(ptr1, 640, 480);
+                Bitmap btmp = Helper.createBitmap(ptr1, 632, 410);
+
+                pictureBox3.Image = btmp;
+
+                //btmp.Save(@"C:\Users\ekaufmann\Desktop\screenys\test.jpg", btmp.RawFormat);
+                //btmp.Save(@"C:\Users\ekaufmann\Desktop\screenys\test.bmp", btmp.RawFormat);
+
+                Image<Bgr, byte> source = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/test.bmp"); // Image B
+                Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                Image<Bgr, byte> imageToShow = source.Copy();
+
+                using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
+                {
+                    double[] minValues, maxValues;
+                    Point[] minLocations, maxLocations;
+                    result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+                    // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
+                    if (maxValues[0] > 0.9)
+                    {
+                        // This is a match. Do something with it, for example draw a rectangle around it.
+                        Rectangle match = new Rectangle(maxLocations[0], template.Size);
+                        imageToShow.Draw(match, new Bgr(Color.Red), 3);
+                    }
+                    else
+                    {
+                        pictureBox1.Image = null;
+                    }
+                }
+
+                // Show imageToShow in an ImageBox (here assumed to be called imageBox1)               
+                //pictureBox1.Image =
+                return imageToShow.ToBitmap();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+
+
+        private void btnStartConnect_Click(object sender, EventArgs e)
+        {
+            if (worker.IsBusy)
+            {
+                worker.CancelAsync();
+                btnStartConnect.Text = "Starten";
+            }
+            else
+            {
+
+                worker.RunWorkerAsync(this);
+                btnStartConnect.Text = "Stoppen";
             }
         }
 
         private void listBoxProcess_DoubleClick(object sender, EventArgs e)
         {
             CurrentProcess = (Process)listBoxProcess.SelectedItem;
-            this.textBoxCurrentProcess.Text = "Current Process: " + CurrentProcess.ProcessName;
+            textBoxCurrentProcess.Text = "Current Process: " + CurrentProcess.ProcessName;
         }
+
+        void worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            while (!worker.CancellationPending)
+            {
+                Bitmap temp = AnalyzeCurrentProgress();
+                SetBitmap(temp);
+                Thread.Sleep(1);
+                //Thread.Sleep(100000);
+            }
+        }
+
+        private void SetBitmap(Bitmap bmp)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate ()
+                {
+                    SetBitmap(bmp);
+                }));
+            }
+            else
+            {
+                this.pictureBox1.Image = bmp;
+            }
+        }
+
     }
 }
