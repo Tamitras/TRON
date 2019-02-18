@@ -35,11 +35,12 @@
             this.textBoxCurrentProcess = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnStartConnect = new System.Windows.Forms.Button();
-            this.pictureBox3 = new System.Windows.Forms.PictureBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.pictureBoxOriginal = new System.Windows.Forms.PictureBox();
+            this.pictureBoxFoundImage = new System.Windows.Forms.PictureBox();
+            this.btnRightClick = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOriginal)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).BeginInit();
             this.SuspendLayout();
             // 
             // listBoxProcess
@@ -88,30 +89,41 @@
             this.btnStartConnect.UseVisualStyleBackColor = true;
             this.btnStartConnect.Click += new System.EventHandler(this.btnStartConnect_Click);
             // 
-            // pictureBox3
+            // pictureBoxOriginal
             // 
-            this.pictureBox3.Location = new System.Drawing.Point(496, 34);
-            this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new System.Drawing.Size(326, 292);
-            this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox3.TabIndex = 7;
-            this.pictureBox3.TabStop = false;
+            this.pictureBoxOriginal.Location = new System.Drawing.Point(496, 34);
+            this.pictureBoxOriginal.Name = "pictureBoxOriginal";
+            this.pictureBoxOriginal.Size = new System.Drawing.Size(326, 292);
+            this.pictureBoxOriginal.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxOriginal.TabIndex = 7;
+            this.pictureBoxOriginal.TabStop = false;
             // 
-            // pictureBox1
+            // pictureBoxFoundImage
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(828, 34);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(326, 292);
-            this.pictureBox1.TabIndex = 8;
-            this.pictureBox1.TabStop = false;
+            this.pictureBoxFoundImage.Location = new System.Drawing.Point(828, 34);
+            this.pictureBoxFoundImage.Name = "pictureBoxFoundImage";
+            this.pictureBoxFoundImage.Size = new System.Drawing.Size(326, 292);
+            this.pictureBoxFoundImage.TabIndex = 8;
+            this.pictureBoxFoundImage.TabStop = false;
+            // 
+            // btnRightClick
+            // 
+            this.btnRightClick.Location = new System.Drawing.Point(227, 321);
+            this.btnRightClick.Name = "btnRightClick";
+            this.btnRightClick.Size = new System.Drawing.Size(230, 23);
+            this.btnRightClick.TabIndex = 9;
+            this.btnRightClick.Text = "Perform Right Click";
+            this.btnRightClick.UseVisualStyleBackColor = true;
+            this.btnRightClick.Click += new System.EventHandler(this.btnRightClick_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1554, 613);
-            this.Controls.Add(this.pictureBox1);
-            this.Controls.Add(this.pictureBox3);
+            this.Controls.Add(this.btnRightClick);
+            this.Controls.Add(this.pictureBoxFoundImage);
+            this.Controls.Add(this.pictureBoxOriginal);
             this.Controls.Add(this.btnStartConnect);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.textBoxCurrentProcess);
@@ -120,8 +132,8 @@
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOriginal)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -135,8 +147,9 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnStartConnect;
         private System.Windows.Forms.BindingSource bindingSource1;
-        private System.Windows.Forms.PictureBox pictureBox3;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox pictureBoxOriginal;
+        private System.Windows.Forms.PictureBox pictureBoxFoundImage;
+        private System.Windows.Forms.Button btnRightClick;
     }
 }
 
