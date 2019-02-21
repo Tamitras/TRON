@@ -170,7 +170,8 @@ namespace Tron
             else
             {
                 Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
-                Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.theme); // Image A
                 Image<Bgr, byte> imageToShow = source.Copy();
 
                 using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
