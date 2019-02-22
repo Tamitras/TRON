@@ -14,9 +14,11 @@ using static Tron.Helper;
 
 namespace Tron
 {
-    public partial class Form1 : Form
+    public partial class TronForm : Form
     {
 
+        [DllImport("user32.dll")]
+        static extern IntPtr SetParent(IntPtr hwc, IntPtr hwp);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
@@ -25,6 +27,12 @@ namespace Tron
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
+
+
+        const short SWP_NOMOVE = 0X2;
+        const short SWP_NOSIZE = 1;
+        const short SWP_NOZORDER = 0X4;
+        const int SWP_SHOWWINDOW = 0x0040;
 
 
         public Bitmap CurrentScreenshot { get; set; }
@@ -38,7 +46,7 @@ namespace Tron
         public Int32 X { get; set; }
         public Int32 Y { get; set; }
 
-        public Form1()
+        public TronForm()
         {
             InitializeComponent();
             CurrentScreenshot = null;
@@ -49,8 +57,9 @@ namespace Tron
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
-            //Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
-            Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
+            Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
+            //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
+            //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("talon")).ToList();
             bindingSource1.DataSource = Processes;
             listBoxProcess.DisplayMember = "ProcessName";
 
@@ -133,22 +142,66 @@ namespace Tron
             CurrentProcess = (Process)listBoxProcess.SelectedItem;
             ProcessHandlePointer = CurrentProcess.MainWindowHandle;
 
-            RECT rect = new RECT();
-            if (Helper.GetWindowRect(ProcessHandlePointer, ref rect))
-            {
-                int left = rect.left;
-                int right = rect.right;
-                int bottom = rect.bottom;
-                int top = rect.top;
+            //RECT rect = new RECT();
+            //if (Helper.GetWindowRect(ProcessHandlePointer, ref rect))
+            //{
+            //    int left = rect.left;
+            //    int right = rect.right;
+            //    int bottom = rect.bottom;
+            //    int top = rect.top;
 
-                MoveWindow(ProcessHandlePointer, 200, 200, 640, 480, true);
-            }
-            else
-            {
-                return;
-            }
+            //    //if (ProcessHandlePointer != IntPtr.Zero)
+            //    //{
+            //    //    //Helper.SetWindowPos(ProcessHandlePointer, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
+            //    //    try
+            //    //    {
+            //    //        Helper.SetWindowPos(ProcessHandlePointer, 0, 200, 200, 640, 480, SWP_SHOWWINDOW);
+            //    //    }
+            //    //    catch (Exception)
+            //    //    {
+            //    //        MessageBox.Show("Window konnte nicht verschoben werden");
+            //    //    }
 
-            textBoxCurrentProcess.Text = "Current Process: " + CurrentProcess.ProcessName;
+            //    //}
+
+            //    //IntPtr handle;
+
+            //    //try
+            //    //{
+            //    //    // Find the handle to the Start Bar
+            //    //    handle = Helper.FindWindow(CurrentProcess.MainWindowTitle, null);
+
+            //    //    IntPtr parentPointer = Helper.GetParentFromChild(handle);
+
+            //    //    // If the handle is found then hide the start bar
+            //    //    if (parentPointer != IntPtr.Zero)
+            //    //    {
+            //    //        // Hide the start bar
+            //    //        Helper.SetWindowPos(parentPointer, 0, 200, 200, 640, 480, SWP_SHOWWINDOW);
+            //    //    }
+            //    //}
+            //    //catch
+            //    //{
+            //    //    MessageBox.Show("Could not hide Start Bar.");
+            //    //}
+
+
+
+            //    //if (MoveWindow(ProcessHandlePointer, 200, 200, 640, 480, true))
+            //    //{
+            //    //    this.textBoxCurrentProcess.Text += Environment.NewLine + "Verschoben fehlerhaft";
+            //    //}
+            //    //else
+            //    //{
+            //    //    this.textBoxCurrentProcess.Text += Environment.NewLine + "Verschoben erfolgreich";
+            //    //}
+            //}
+            //else
+            //{
+            //    return;
+            //}
+
+            textBoxCurrentProcess.Text += "Ausgewählter Process: " + CurrentProcess.ProcessName + ", " + CurrentProcess.MainWindowTitle;
         }
 
 
@@ -169,28 +222,31 @@ namespace Tron
             }
             else
             {
-                Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
-                //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.theme); // Image A
-                Image<Bgr, byte> imageToShow = source.Copy();
-
-                using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
+                if (null != CurrentScreenshot)
                 {
-                    double[] minValues, maxValues;
-                    Point[] minLocations, maxLocations;
-                    result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+                    Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
+                    //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.theme); // Image A
+                    Image<Bgr, byte> imageToShow = source.Copy();
 
-                    // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
-                    if (maxValues[0] > 0.9)
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
                     {
-                        // This is a match. Do something with it, for example draw a rectangle around it.
-                        Rectangle match = new Rectangle(maxLocations[0], template.Size);
-                        imageToShow.Draw(match, new Bgr(Color.Red), 3);
-                        X = maxLocations[0].X;
-                        Y = maxLocations[0].Y;
+                        double[] minValues, maxValues;
+                        Point[] minLocations, maxLocations;
+                        result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+                        // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
+                        if (maxValues[0] > 0.9)
+                        {
+                            // This is a match. Do something with it, for example draw a rectangle around it.
+                            Rectangle match = new Rectangle(maxLocations[0], template.Size);
+                            imageToShow.Draw(match, new Bgr(Color.Red), 3);
+                            X = maxLocations[0].X;
+                            Y = maxLocations[0].Y;
+                        }
                     }
+                    pictureBoxFoundImage.Image = imageToShow.ToBitmap();
                 }
-                pictureBoxFoundImage.Image = imageToShow.ToBitmap();
             }
         }
 
@@ -217,6 +273,30 @@ namespace Tron
             var w = (Y << 16) | X;
             Helper.SendMessage((int)ProcessHandlePointer, Helper.WM_RBUTTONDBLCLK, 0x00000001, w);
 
+        }
+
+        private void btnStartNewProcess_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                StartAppInNewProcess();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Startet TalonRo in neuem Process und setzt diesen als ChildProcess
+        /// </summary>
+        private void StartAppInNewProcess()
+        {
+            Process p = Process.Start(@"C:\Games\TalonRO\TalonPatch.exe");
+            Thread.Sleep(500);
+            p.WaitForInputIdle();
+            SetParent(p.MainWindowHandle, this.Handle);
         }
     }
 }

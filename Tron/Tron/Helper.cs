@@ -8,8 +8,6 @@ namespace Tron
 {
     class Helper
     {
-
-
         // The SendMessage function sends the specified message to a window or windows. 
         // It calls the window procedure for the specified window and does not return
         // until the window procedure has processed the message. 
@@ -33,6 +31,11 @@ namespace Tron
             return ((p_2 << 16) | (p & 0xFFFF));
         }
 
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
+        public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
+
+        [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr GetParent(IntPtr hWnd);
 
         // The WM_COMMAND message is sent when the user selects a command item from 
         // a menu, when a control sends a notification message to its parent window, 
@@ -62,8 +65,8 @@ namespace Tron
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool GetWindowRect(IntPtr hWnd, ref RECT Rect);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+        //[DllImport("user32.dll", SetLastError = true)]
+        //public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
 
 
@@ -87,14 +90,8 @@ namespace Tron
         internal static extern IntPtr SelectObject(IntPtr hdc, IntPtr bmp);
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         internal static extern IntPtr DeleteObject(IntPtr hDc);
-        [DllImport("user32.dll")]
-        public static extern int SendMessage(
-              int hWnd,      // handle to destination window
-              uint Msg,       // message
-              long wParam,  // first message parameter
-              long lParam   // second message parameter
-              );
-        //static IntPtr hWnd = FindWindow(null, "My programs title");
+
+
 
         public static Bitmap createBitmap(IntPtr hWnd, int heigth, int width)
         {
@@ -131,7 +128,24 @@ namespace Tron
             return bmp;
         }
 
+        public static IntPtr GetParentFromChild(IntPtr childPtr)
+        {
+            IntPtr oldptr = childPtr;
+            while (true)
+            {
+                IntPtr newPtr = Helper.GetParent(oldptr);                
+               
+                if(IntPtr.Zero == newPtr)
+                {
+                    return oldptr; // ParentProzess
+                }
+                else
+                {
+                    oldptr = newPtr; // Next round
+                }
+            }
 
+        }
 
     }
 }
