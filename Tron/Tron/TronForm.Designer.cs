@@ -35,12 +35,9 @@
             this.textBoxCurrentProcess = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnStartConnect = new System.Windows.Forms.Button();
-            this.pictureBoxOriginal = new System.Windows.Forms.PictureBox();
             this.pictureBoxFoundImage = new System.Windows.Forms.PictureBox();
             this.btnRightClick = new System.Windows.Forms.Button();
-            this.btnStartNewProcess = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOriginal)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).BeginInit();
             this.SuspendLayout();
             // 
@@ -90,22 +87,11 @@
             this.btnStartConnect.UseVisualStyleBackColor = true;
             this.btnStartConnect.Click += new System.EventHandler(this.btnStartConnect_Click);
             // 
-            // pictureBoxOriginal
-            // 
-            this.pictureBoxOriginal.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBoxOriginal.Location = new System.Drawing.Point(809, 34);
-            this.pictureBoxOriginal.Name = "pictureBoxOriginal";
-            this.pictureBoxOriginal.Size = new System.Drawing.Size(446, 557);
-            this.pictureBoxOriginal.TabIndex = 7;
-            this.pictureBoxOriginal.TabStop = false;
-            // 
             // pictureBoxFoundImage
             // 
             this.pictureBoxFoundImage.Location = new System.Drawing.Point(440, 34);
             this.pictureBoxFoundImage.Name = "pictureBoxFoundImage";
-            this.pictureBoxFoundImage.Size = new System.Drawing.Size(360, 343);
+            this.pictureBoxFoundImage.Size = new System.Drawing.Size(676, 546);
             this.pictureBoxFoundImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxFoundImage.TabIndex = 8;
             this.pictureBoxFoundImage.TabStop = false;
@@ -120,25 +106,13 @@
             this.btnRightClick.UseVisualStyleBackColor = true;
             this.btnRightClick.Click += new System.EventHandler(this.btnRightClick_Click);
             // 
-            // btnStartNewProcess
-            // 
-            this.btnStartNewProcess.Location = new System.Drawing.Point(204, 321);
-            this.btnStartNewProcess.Name = "btnStartNewProcess";
-            this.btnStartNewProcess.Size = new System.Drawing.Size(230, 23);
-            this.btnStartNewProcess.TabIndex = 10;
-            this.btnStartNewProcess.Text = "Open Tron in new Window";
-            this.btnStartNewProcess.UseVisualStyleBackColor = true;
-            this.btnStartNewProcess.Click += new System.EventHandler(this.btnStartNewProcess_Click);
-            // 
             // TronForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1267, 592);
-            this.Controls.Add(this.btnStartNewProcess);
             this.Controls.Add(this.btnRightClick);
             this.Controls.Add(this.pictureBoxFoundImage);
-            this.Controls.Add(this.pictureBoxOriginal);
             this.Controls.Add(this.btnStartConnect);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.textBoxCurrentProcess);
@@ -147,7 +121,6 @@
             this.Name = "TronForm";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOriginal)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -162,10 +135,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnStartConnect;
         private System.Windows.Forms.BindingSource bindingSource1;
-        private System.Windows.Forms.PictureBox pictureBoxOriginal;
         private System.Windows.Forms.PictureBox pictureBoxFoundImage;
         private System.Windows.Forms.Button btnRightClick;
-        private System.Windows.Forms.Button btnStartNewProcess;
     }
 }
 

@@ -54,6 +54,9 @@ namespace Tron
             Initialize();
         }
 
+        /// <summary>
+        /// Initialisiert die Anwendung
+        /// </summary>
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
@@ -92,13 +95,14 @@ namespace Tron
             try
             {
                 //Bitmap btmp = Helper.createBitmap(ptr1, 640, 480);
-                Bitmap btmp = Helper.createBitmap(ProcessHandlePointer, 632, 410);
-                pictureBoxOriginal.Image = btmp;
-                CurrentScreenshot = btmp;
+
+                // best capture for 640x480 resolution
+                CurrentScreenshot = Helper.createBitmap(ProcessHandlePointer, 803, 603);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
+                //MessageBox.Show("Error on AnalyzeCurrentProgress: " + ex.Message);
                 return;
             }
         }
@@ -114,7 +118,7 @@ namespace Tron
             while (!worker.CancellationPending)
             {
                 AnalyzeCurrentProgress();
-                Thread.Sleep(1);
+                Thread.Sleep(10);
             }
         }
 
@@ -205,10 +209,8 @@ namespace Tron
         }
 
 
-
-
         /// <summary>
-        /// Analysiert den aktuellen Screenshot
+        /// Analysiert den aktuellen Screenshot und vergleicht diesen mit einem template
         /// </summary>
         private void AnalyseScreenshot()
         {
@@ -226,29 +228,39 @@ namespace Tron
                 {
                     Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
                     //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.theme); // Image A
-                    Image<Bgr, byte> imageToShow = source.Copy();
+                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead); // Image A
+                    //Image<Bgr, byte> imageToShow = source.Copy();
 
-                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
-                    {
-                        double[] minValues, maxValues;
-                        Point[] minLocations, maxLocations;
-                        result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
 
-                        // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
-                        if (maxValues[0] > 0.9)
-                        {
-                            // This is a match. Do something with it, for example draw a rectangle around it.
-                            Rectangle match = new Rectangle(maxLocations[0], template.Size);
-                            imageToShow.Draw(match, new Bgr(Color.Red), 3);
-                            X = maxLocations[0].X;
-                            Y = maxLocations[0].Y;
-                        }
-                    }
-                    pictureBoxFoundImage.Image = imageToShow.ToBitmap();
+                    Image<Bgr, byte>  res = FindTemplate(template, source);
+                    pictureBoxFoundImage.Image = res.ToBitmap();
                 }
             }
         }
+
+        private Image<Bgr, byte> FindTemplate(Image<Bgr, byte> template, Image<Bgr, byte> source)
+        {
+            Image<Bgr, byte> imageToShow = source.Copy();
+            using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
+            {
+                double[] minValues, maxValues;
+                Point[] minLocations, maxLocations;
+                result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+                // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
+                if (maxValues[0] > 0.9) 
+                {
+                    // This is a match. Do something with it, for example draw a rectangle around it.
+                    Rectangle match = new Rectangle(maxLocations[0], template.Size);
+                    imageToShow.Draw(match, new Bgr(Color.Red), 3);
+                    X = maxLocations[0].X;
+                    Y = maxLocations[0].Y;
+                }
+            }
+
+            return imageToShow;
+        }
+            
 
         private void btnRightClick_Click(object sender, EventArgs e)
         {

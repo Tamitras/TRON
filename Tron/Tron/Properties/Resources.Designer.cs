@@ -63,6 +63,16 @@ namespace Tron.Properties {
         /// <summary>
         ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap templateHead {
+            get {
+                object obj = ResourceManager.GetObject("templateHead", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap theme {
             get {
                 object obj = ResourceManager.GetObject("theme", resourceCulture);
