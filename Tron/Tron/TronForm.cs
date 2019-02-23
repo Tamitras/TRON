@@ -10,48 +10,84 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Gma.System.MouseKeyHook;
 using static Tron.Helper;
+using System.Threading.Tasks;
+using WindowsInput;
 
 namespace Tron
 {
     public partial class TronForm : Form
     {
 
-        [DllImport("user32.dll")]
-        static extern IntPtr SetParent(IntPtr hwc, IntPtr hwp);
+        public Boolean TemlateFound_Head { get; set; }
 
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+        /// <summary>
+        /// Offsize zwischen Screen und Window (links)
+        /// </summary>
+        private Int32 OffSizeLeft { get; set; }
 
-        private const int MOUSEEVENTF_LEFTDOWN = 0x02;
-        private const int MOUSEEVENTF_LEFTUP = 0x04;
-        private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
-        private const int MOUSEEVENTF_RIGHTUP = 0x10;
+        /// <summary>
+        /// Offsize zwischen Screen und Window (Oben)
+        /// </summary>
+        private Int32 OffSizeTop { get; set; }
+        public Double CurrentCoeff { get; set; }
 
+        /// <summary>
+        /// Liste mit Templates
+        /// z.B. Lebensbalken des Spielers
+        /// </summary>
+        public List<Tuple<Bitmap, String>> Templates { get; set; }
 
-        const short SWP_NOMOVE = 0X2;
-        const short SWP_NOSIZE = 1;
-        const short SWP_NOZORDER = 0X4;
-        const int SWP_SHOWWINDOW = 0x0040;
+        /// <summary>
+        /// Global Mouse Hook Interface-Events
+        /// </summary>
+        private IKeyboardMouseEvents m_GlobalHook;
 
 
         public Bitmap CurrentScreenshot { get; set; }
         public List<Process> Processes { get; set; }
         public Process CurrentProcess { get; set; }
-        public BackgroundWorker worker { get; set; }
-        public Thread analyseScreenshotThread { get; set; }
 
         public IntPtr ProcessHandlePointer { get; set; }
 
-        public Int32 X { get; set; }
-        public Int32 Y { get; set; }
+        public Int32 FoundTemplateX { get; set; }
+        public Int32 FoundTemplateY { get; set; }
 
+        public Int32 CalcedTemplateX { get; set; }
+        public Int32 CalcedTemplateY { get; set; }
+
+        Int32 CurrentMousePosX { get; set; }
+        Int32 CurrentMousePosY { get; set; }
+
+
+        /// <summary>
+        /// Konstruktor
+        /// </summary>
         public TronForm()
         {
             InitializeComponent();
+
+            Templates = new List<Tuple<Bitmap, String>>();
+            m_GlobalHook = Hook.GlobalEvents();
+            m_GlobalHook.MouseMove += M_GlobalHook_MouseMove;
             CurrentScreenshot = null;
             Processes = new List<Process>();
             Initialize();
+        }
+
+        private void M_GlobalHook_MouseMove(object sender, MouseEventArgs e)
+        {
+            CurrentMousePosX = e.X;
+            CurrentMousePosY = e.Y;
+
+            labelMousePosX.Text = CurrentMousePosX.ToString();
+            labelMousePosY.Text = CurrentMousePosY.ToString();
+        }
+
+        private void WriteToLog(String text)
+        {
+            //this.textBoxLog.Text += DateTime.Now.ToLongTimeString() + ": " + text + Environment.NewLine;
         }
 
         /// <summary>
@@ -60,183 +96,238 @@ namespace Tron
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
-            Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
+            //Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
             //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
-            //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("talon")).ToList();
+            Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("talon")).ToList();
             bindingSource1.DataSource = Processes;
             listBoxProcess.DisplayMember = "ProcessName";
-
-            worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
-            worker.WorkerSupportsCancellation = true;
-
-            // Startet den Worker
-            worker.DoWork += new DoWorkEventHandler(worker_DoWork);
-            // In Methode einbinden
-
-            // Thread wird initialisiert
-            analyseScreenshotThread = new Thread(delegate ()
-            {
-                while (true)
-                {
-                    AnalyseScreenshot();
-                    Thread.Sleep(100);
-                }
-
-            });
-
         }
+
 
         /// <summary>
         /// 
         /// </summary>
-        public void AnalyzeCurrentProgress()
+        public Bitmap AnalyzeCurrentProgress()
         {
             try
             {
                 //Bitmap btmp = Helper.createBitmap(ptr1, 640, 480);
-
                 // best capture for 640x480 resolution
-                CurrentScreenshot = Helper.createBitmap(ProcessHandlePointer, 803, 603);
+
+                return Helper.createBitmap(ProcessHandlePointer, 803, 603);
+
             }
             catch (Exception ex)
             {
-                //Console.WriteLine(ex.Message);
-                //MessageBox.Show("Error on AnalyzeCurrentProgress: " + ex.Message);
-                return;
+                this.WriteToLog(ex.Message);
+                return null;
             }
         }
 
 
         /// <summary>
-        /// Worker Thread, ist mit Screenshotten beschäftigt
+        /// Aktualisiert die PicutreBox
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void worker_DoWork(object sender, DoWorkEventArgs e)
+        /// <param name="res"></param>
+        private void RefreshUI(Bitmap res)
         {
-            while (!worker.CancellationPending)
+            try
             {
-                AnalyzeCurrentProgress();
-                Thread.Sleep(10);
+                if (this.pictureBoxFoundImage.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate ()
+                    {
+                        RefreshUI(res);
+                    }));
+                }
+                else
+                {
+                    pictureBoxFoundImage.Image = res;
+                    lblCurrentCoeff.Text = CurrentCoeff.ToString();
+                    lblFoundX.Text = FoundTemplateX.ToString();
+                    lblFoundY.Text = FoundTemplateY.ToString();
+
+                    labelMousePosX.Text = CurrentMousePosX.ToString();
+                    labelMousePosY.Text = CurrentMousePosY.ToString();
+
+                    lblCalcedPosX.Text = CalcedTemplateX.ToString();
+                    lblCalcedPosY.Text = CalcedTemplateY.ToString();
+                }
             }
-        }
-
-
-        private void btnStartConnect_Click(object sender, EventArgs e)
-        {
-
-            if (worker.IsBusy)
+            catch (Exception ex)
             {
-                worker.CancelAsync();
-                btnStartConnect.Text = "Starten";
-                analyseScreenshotThread.Abort();
+                this.WriteToLog(ex.Message);
             }
-            else
-            {
-
-                analyseScreenshotThread.Start();
-                worker.RunWorkerAsync(this);
-                btnStartConnect.Text = "Stoppen";
-            }
-        }
-
-        private void listBoxProcess_DoubleClick(object sender, EventArgs e)
-        {
-            CurrentProcess = (Process)listBoxProcess.SelectedItem;
-            ProcessHandlePointer = CurrentProcess.MainWindowHandle;
-
-            //RECT rect = new RECT();
-            //if (Helper.GetWindowRect(ProcessHandlePointer, ref rect))
-            //{
-            //    int left = rect.left;
-            //    int right = rect.right;
-            //    int bottom = rect.bottom;
-            //    int top = rect.top;
-
-            //    //if (ProcessHandlePointer != IntPtr.Zero)
-            //    //{
-            //    //    //Helper.SetWindowPos(ProcessHandlePointer, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
-            //    //    try
-            //    //    {
-            //    //        Helper.SetWindowPos(ProcessHandlePointer, 0, 200, 200, 640, 480, SWP_SHOWWINDOW);
-            //    //    }
-            //    //    catch (Exception)
-            //    //    {
-            //    //        MessageBox.Show("Window konnte nicht verschoben werden");
-            //    //    }
-
-            //    //}
-
-            //    //IntPtr handle;
-
-            //    //try
-            //    //{
-            //    //    // Find the handle to the Start Bar
-            //    //    handle = Helper.FindWindow(CurrentProcess.MainWindowTitle, null);
-
-            //    //    IntPtr parentPointer = Helper.GetParentFromChild(handle);
-
-            //    //    // If the handle is found then hide the start bar
-            //    //    if (parentPointer != IntPtr.Zero)
-            //    //    {
-            //    //        // Hide the start bar
-            //    //        Helper.SetWindowPos(parentPointer, 0, 200, 200, 640, 480, SWP_SHOWWINDOW);
-            //    //    }
-            //    //}
-            //    //catch
-            //    //{
-            //    //    MessageBox.Show("Could not hide Start Bar.");
-            //    //}
-
-
-
-            //    //if (MoveWindow(ProcessHandlePointer, 200, 200, 640, 480, true))
-            //    //{
-            //    //    this.textBoxCurrentProcess.Text += Environment.NewLine + "Verschoben fehlerhaft";
-            //    //}
-            //    //else
-            //    //{
-            //    //    this.textBoxCurrentProcess.Text += Environment.NewLine + "Verschoben erfolgreich";
-            //    //}
-            //}
-            //else
-            //{
-            //    return;
-            //}
-
-            textBoxCurrentProcess.Text += "Ausgewählter Process: " + CurrentProcess.ProcessName + ", " + CurrentProcess.MainWindowTitle;
         }
 
 
         /// <summary>
         /// Analysiert den aktuellen Screenshot und vergleicht diesen mit einem template
         /// </summary>
-        private void AnalyseScreenshot()
+        private async void AnalyseScreenshot()
         {
-            if (InvokeRequired)
+            try
             {
-                Invoke(new MethodInvoker(delegate ()
+                Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
+                //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead); // Image A
+                Image<Bgr, byte> res = FindTemplate(template, source);
+
+                await Task.Run(() =>
+                {
+                    RefreshUI(res.ToBitmap());
+                });
+
+            }
+            catch (Exception ex)
+            {
+                this.WriteToLog(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Asynchroner Task zum analysieren des Processes
+        /// Macht Screenshots vom Process
+        /// </summary>
+        private async void StartAnalyseProcessAsync()
+        {
+            await Task.Run(async () =>
+            {
+                while (true)
+                {
+                    CurrentScreenshot = AnalyzeCurrentProgress();
+                    await Task.Delay(10);
+                }
+            });
+
+        }
+
+        /// <summary>
+        /// Asynchroner Task zum Analysieren des aktuellen Screenshots
+        /// </summary>
+        private async void StartAnalyseScreenshotAsync()
+        {
+            await Task.Run(async () =>
+            {
+                while (true)
                 {
                     AnalyseScreenshot();
+                    await Task.Delay(20);
+                }
+            });
+        }
 
-                }));
+        private async void SimulateClickAsync()
+        {
+            await Task.Run(async () =>
+            {
+                while (true)
+                {
+                    
+                    if(TemlateFound_Head)
+                    {
+                        MoveMouseAndSimulateClick();
+                        
+                        await Task.Delay(5000);
+                    }
+                }
+            });
+        }
+
+        private void MoveMouseAndSimulateClick()
+        {
+            InvokeIfRequired(this, (MethodInvoker)delegate ()
+            {
+                Int32 oldMousePosX = CurrentMousePosX;
+                Int32 oldMousePosY = CurrentMousePosY;
+
+                //Helper.SetCursorPos((int)CalcedTemplateX, (int)CalcedTemplateY);
+                System.Threading.Thread.Sleep(100);
+                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN | User32.MOUSEEVENTF_LEFTUP, CalcedTemplateX, CalcedTemplateY, 0, 0);
+                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN | User32.MOUSEEVENTF_LEFTUP, FoundTemplateX, FoundTemplateY, 0, 0);
+
+                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN, CalcedTemplateX, CalcedTemplateY, 0, 0);
+                //System.Threading.Thread.Sleep(200);
+                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTUP, CalcedTemplateX, CalcedTemplateY, 0, 0);
+                //System.Threading.Thread.Sleep(500);
+                //Helper.SetCursorPos(oldMousePosX, oldMousePosY);
+                ////WriteToLog("SimulatedMouseEvent");
+                ///
+
+                IntPtr hWnd = CurrentProcess.MainWindowHandle;
+
+
+
+                if ((int)hWnd > 0)
+                {
+                    SetForegroundWindow((int)hWnd);
+                    Thread.Sleep(100);
+                    //Helper.MouseMove(-9999, -9999);
+                    Thread.Sleep(100);
+                    Helper.MouseMove(CalcedTemplateX, CalcedTemplateY);
+                    //Helper.MouseMove(-641, 500);
+                    Thread.Sleep(150);
+                    Helper.ClickLeftMouseButtonDown();
+                    Thread.Sleep(150);
+                    Helper.ClickLeftMouseButtonUp();
+
+                    //    InputSimulator temp = new InputSimulator();
+                    //    temp.Mouse.MoveMouseBy(100, 100);
+                    //    temp.Mouse.Sleep(1);
+                }
+                else
+                {
+                    MessageBox.Show("Window Not Found!");
+                }
+                
+
+                Thread.Sleep(50);
+                //Helper.SetCursorPos(oldMousePosX, oldMousePosY);
+            });
+           
+        }
+
+
+
+
+        /// <summary>
+        /// -------------------------------------------------------------------------------
+        /// ------------------------
+        /// -------------------------------------------------------------------------------
+        /// </summary>
+
+
+        private void InvokeIfRequired(Control target, Delegate methodToInvoke)
+        {
+            /* Mit Hilfe von InvokeRequired wird geprüft ob der Aufruf direkt an die UI gehen kann oder
+             * ob ein Invokeing hier von Nöten ist
+             */
+            if (target.InvokeRequired)
+            {
+                // Das Control muss per Invoke geändert werden, weil der aufruf aus einem Backgroundthread kommt
+                target.Invoke(methodToInvoke);
             }
             else
             {
-                if (null != CurrentScreenshot)
-                {
-                    Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
-                    //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead); // Image A
-                    //Image<Bgr, byte> imageToShow = source.Copy();
-
-
-                    Image<Bgr, byte>  res = FindTemplate(template, source);
-                    pictureBoxFoundImage.Image = res.ToBitmap();
-                }
+                // Die Änderung an der UI kann direkt aufgerufen werden.
+                methodToInvoke.DynamicInvoke();
             }
         }
+
+        private void BtnStartConnect_Click(object sender, EventArgs e)
+        {
+            StartAnalyseProcessAsync();
+            StartAnalyseScreenshotAsync();
+            SimulateClickAsync();
+        }
+
+        private void listBoxProcess_DoubleClick(object sender, EventArgs e)
+        {
+            CurrentProcess = (Process)listBoxProcess.SelectedItem;
+            ProcessHandlePointer = CurrentProcess.MainWindowHandle;
+            textBoxLog.Text += "Ausgewählter Process: " + CurrentProcess.ProcessName + ", " + CurrentProcess.MainWindowTitle;
+        }
+
 
         private Image<Bgr, byte> FindTemplate(Image<Bgr, byte> template, Image<Bgr, byte> source)
         {
@@ -247,68 +338,62 @@ namespace Tron
                 Point[] minLocations, maxLocations;
                 result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
 
+
+                CurrentCoeff = maxValues[0];
                 // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
-                if (maxValues[0] > 0.9) 
+                if (maxValues[0] > 0.77)
                 {
                     // This is a match. Do something with it, for example draw a rectangle around it.
                     Rectangle match = new Rectangle(maxLocations[0], template.Size);
                     imageToShow.Draw(match, new Bgr(Color.Red), 3);
-                    X = maxLocations[0].X;
-                    Y = maxLocations[0].Y;
+                    FoundTemplateX = maxLocations[0].X;
+                    FoundTemplateY = maxLocations[0].Y;
+
+
+                    var rect = new Helper.Rect();
+                    Helper.GetWindowRect(CurrentProcess.MainWindowHandle, ref rect);
+
+                    OffSizeLeft = rect.left;
+                    OffSizeTop = rect.top;
+                    int width = rect.right - rect.left;
+                    int height = rect.bottom - rect.top;
+
+                    CalcedTemplateX = maxLocations[0].X + (template.Size.Width / 2) + OffSizeLeft;
+                    CalcedTemplateY = maxLocations[0].Y + (template.Size.Height) + OffSizeTop;
+
+                    TemlateFound_Head = true;
+                }
+                else
+                {
+                    TemlateFound_Head = false;
                 }
             }
 
             return imageToShow;
         }
-            
+
+      
+
 
         private void btnRightClick_Click(object sender, EventArgs e)
         {
-            //IntPtr res =  Helper.SendMessage(ProcessHandlePointer, Helper.WM_RBUTTONDOWN, 0, Helper.MAKELPARAM(X, Y));
-            //res = Helper.SendMessage(ProcessHandlePointer, Helper.WM_RBUTTONUP, 0, Helper.MAKELPARAM(X, Y));
-
-
-            //IntPtr returnValue = Helper.SendMessage(out hwndMessageWasSentTo, msg, wParam, lParam); 
-            //if (res != IntPtr.Zero)
-            //    Console.WriteLine("Message successfully sent to hwnd: " + hwndMessageWasSentTo.ToString() + " and return value was: " + returnValue.ToString());
-            //else
-            //    Console.WriteLine("No windows found in process.  SendMessage was not called.");
-
-            //mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, (uint)X, (uint)Y, 0, 0);
-
-
-
-
-            //https://stackoverflow.com/questions/10355286/programmatically-mouse-click-in-another-window/24357790
-
             // these are the pointer choords
-            var w = (Y << 16) | X;
-            Helper.SendMessage((int)ProcessHandlePointer, Helper.WM_RBUTTONDBLCLK, 0x00000001, w);
+            //var w = (Y << 16) | X;
+            //Helper.SendMessage((int)ProcessHandlePointer, Helper.WM_RBUTTONDBLCLK, 0x00000001, w);
 
         }
 
-        private void btnStartNewProcess_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                StartAppInNewProcess();
-            }
-            catch (Exception ex)
-            {
 
-                throw;
-            }
-        }
+        ///// <summary>
+        ///// Startet TalonRo in neuem Process und setzt diesen als ChildProcess
+        ///// </summary>
+        //private void StartAppInNewProcess()
+        //{
+        //    Process p = Process.Start(@"C:\Games\TalonRO\TalonPatch.exe");
+        //    Thread.Sleep(500);
+        //    p.WaitForInputIdle();
+        //    SetParent(p.MainWindowHandle, this.Handle);
+        //}
 
-        /// <summary>
-        /// Startet TalonRo in neuem Process und setzt diesen als ChildProcess
-        /// </summary>
-        private void StartAppInNewProcess()
-        {
-            Process p = Process.Start(@"C:\Games\TalonRO\TalonPatch.exe");
-            Thread.Sleep(500);
-            p.WaitForInputIdle();
-            SetParent(p.MainWindowHandle, this.Handle);
-        }
     }
 }

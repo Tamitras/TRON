@@ -8,31 +8,124 @@ namespace Tron
 {
     class Helper
     {
-        // The SendMessage function sends the specified message to a window or windows. 
-        // It calls the window procedure for the specified window and does not return
-        // until the window procedure has processed the message. 
-        [DllImport("User32.dll")]
-        public static extern Int32 SendMessage(
-            int hWnd,               // handle to destination window
-            int Msg,                // message
-            int wParam,             // first message parameter
-            [MarshalAs(UnmanagedType.LPStr)] string lParam); // second message parameter
 
+        /// <summary>
+        /// -------------------------------------------------------------------------------
+        /// ------------------------
+        /// -------------------------------------------------------------------------------
+        /// </summary>
 
-        [DllImport("User32.dll")]
-        public static extern Int32 SendMessage(
-            int hWnd,               // handle to destination window
-            int Msg,                // message
-            int wParam,             // first message parameter
-            int lParam);            // second message parameter
-
-        public static int MAKELPARAM(int p, int p_2)
+        [Flags]
+        public enum MouseEventFlags : uint
         {
-            return ((p_2 << 16) | (p & 0xFFFF));
+            MOUSEEVENT_MOVE = 0x0001,
+            MOUSEEVENT_LEFTDOWN = 0x0002,
+            MOUSEEVENT_LEFTUP = 0x0004,
+            MOUSEEVENT_RIGHTDOWN = 0x0008,
+            MOUSEEVENT_RIGHTUP = 0x0010,
+            MOUSEEVENT_MIDDLEDOWN = 0x0020,
+            MOUSEEVENT_MIDDLEUP = 0x0040,
+            MOUSEEVENT_XDOWN = 0x0080,
+            MOUSEEVENT_XUP = 0x0100,
+            MOUSEEVENT_WHEEL = 0x0800,
+            MOUSEEVENT_VIRTUALDESK = 0x4000,
+            MOUSEEVENT_ABSOLUTE = 0x8000
         }
 
-        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
-        public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
+        [Flags]
+        public enum SendInputEventType : uint
+        {
+            InputMouse,
+            InputKeyboard,
+            InputHardware
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct INPUT
+        {
+            public SendInputEventType type;
+            public MOUSEANDKEYBOARDINPUT mkhi;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct MOUSEANDKEYBOARDINPUT
+        {
+            [FieldOffset(0)]
+            public MOUSEINPUT mi;
+
+            [FieldOffset(0)]
+            public KEYBOARDINPUT ki;
+
+            [FieldOffset(0)]
+            public HARDWAREINPUT hi;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KEYBOARDINPUT
+        {
+            public ushort wVk;
+            public ushort wScan;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct HARDWAREINPUT
+        {
+            public int uMsg;
+            public short wParamL;
+            public short wParamH;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public MouseEventFlags dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+        public static void MouseMove(int dx, int dy)
+        {
+            INPUT mouseMove = new INPUT();
+            mouseMove.type = SendInputEventType.InputMouse;
+            mouseMove.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_MOVE;
+            mouseMove.mkhi.mi.dx = dx;
+            mouseMove.mkhi.mi.dy = dy;
+            SendInput(1, ref mouseMove, Marshal.SizeOf(new INPUT()));
+        }
+
+        public static void ClickLeftMouseButtonDown()
+        {
+            INPUT mouseDownInput = new INPUT();
+            mouseDownInput.type = SendInputEventType.InputMouse;
+            mouseDownInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_LEFTDOWN;
+            SendInput(1, ref mouseDownInput, Marshal.SizeOf(new INPUT()));
+        }
+
+        public static void ClickLeftMouseButtonUp()
+        {
+            INPUT mouseUpInput = new INPUT();
+            mouseUpInput.type = SendInputEventType.InputMouse;
+            mouseUpInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_LEFTUP;
+            SendInput(1, ref mouseUpInput, Marshal.SizeOf(new INPUT()));
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint SendInput(uint nInputs, ref INPUT pInputs, int cbSize);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll")]
+        static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImportAttribute("User32.dll")]
+        public static extern IntPtr SetForegroundWindow(int hWnd);
+
 
         [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
         public static extern IntPtr GetParent(IntPtr hWnd);
@@ -50,8 +143,15 @@ namespace Tron
         public const int WM_RBUTTONUP = 0x205;
         public const int WM_RBUTTONDBLCLK = 0x206;
 
+        public const int MOUSEEVENTF_LEFTDOWN = 0x02;
+        public const int MOUSEEVENTF_LEFTUP = 0x04;
+        public const int MOUSEEVENTF_RIGHTDOWN = 0x08;
+        public const int MOUSEEVENTF_RIGHTUP = 0x10;
+        public const int MOUSEEVENTF_MOVE = 0x01;
+        public const int MOUSEEVENTF_ABSOLUTE = 0x8000;
+
         [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
+        public struct Rect
         {
             public int left;
             public int top;
@@ -63,12 +163,7 @@ namespace Tron
         static extern int GetWindowRgn(IntPtr hWnd, IntPtr hRgn);
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT Rect);
-
-        //[DllImport("user32.dll", SetLastError = true)]
-        //public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-
-
+        public static extern bool GetWindowRect(IntPtr hWnd, ref Rect Rect);
 
         public const int SRCCOPY = 13369376;
         public const int WM_CLICK = 0x00F5;
@@ -90,6 +185,15 @@ namespace Tron
         internal static extern IntPtr SelectObject(IntPtr hdc, IntPtr bmp);
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         internal static extern IntPtr DeleteObject(IntPtr hDc);
+
+
+
+
+
+
+
+
+
 
 
 
