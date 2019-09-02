@@ -19,7 +19,7 @@ namespace Tron
 {
     public partial class TronForm : Form
     {
-        public Boolean TemlateFound_Head { get; set; }
+        public Boolean TemplateFound { get; set; }
 
         /// <summary>
         /// Offsize zwischen Screen und Window (links)
@@ -44,7 +44,8 @@ namespace Tron
         private IKeyboardMouseEvents m_GlobalHook;
 
 
-        public Bitmap CurrentScreenshot { get; set; }
+        public Bitmap CurrentScreenshotWindow { get; set; }
+        public Bitmap CurrentScreenshotBobber { get; set; }
         public List<Process> Processes { get; set; }
         public Process CurrentProcess { get; set; }
 
@@ -70,7 +71,7 @@ namespace Tron
             Templates = new List<Tuple<Bitmap, String>>();
             m_GlobalHook = Hook.GlobalEvents();
             m_GlobalHook.MouseMove += M_GlobalHook_MouseMove;
-            CurrentScreenshot = null;
+            CurrentScreenshotWindow = null;
             Processes = new List<Process>();
             Initialize();
         }
@@ -98,9 +99,8 @@ namespace Tron
             Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
             //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
             Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("Wow")).ToList();
-            //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("rag")).ToList();
 
-            if(Processes.Any())
+            if (Processes.Any())
             {
                 bindingSource1.DataSource = Processes;
                 listBoxProcess.DisplayMember = "ProcessName";
@@ -108,22 +108,22 @@ namespace Tron
             else
             {
                 return;
-            }            
+            }
         }
 
 
         /// <summary>
-        /// 
+        /// Liefert den aktuellen Bildausschnitt
         /// </summary>
-        public Bitmap AnalyzeCurrentProgress()
+        public Bitmap GetCurrentScreentshot()
         {
             try
             {
                 //Bitmap btmp = Helper.createBitmap(ptr1, 640, 480);
                 // best capture for 640x480 resolution
 
-                //return Helper.createBitmap(ProcessHandlePointer, 803, 603);
-                return Helper.createBitmap(ProcessHandlePointer, 1920, 1080);
+                return Helper.createBitmap(ProcessHandlePointer, 640, 480);
+                //return Helper.createBitmap(ProcessHandlePointer, 1920, 1080);
             }
             catch (Exception ex)
             {
@@ -137,7 +137,7 @@ namespace Tron
         /// Aktualisiert die PicutreBox
         /// </summary>
         /// <param name="res"></param>
-        private void RefreshUI(Bitmap res)
+        private void RefreshUIFoundTemplate(Bitmap res)
         {
             try
             {
@@ -145,12 +145,38 @@ namespace Tron
                 {
                     Invoke(new MethodInvoker(delegate ()
                     {
-                        RefreshUI(res);
+                        RefreshUIFoundTemplate(res);
                     }));
                 }
                 else
                 {
                     pictureBoxFoundImage.Image = res;
+                }
+            }
+            catch (Exception ex)
+            {
+                this.WriteToLog(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert die PicutreBox
+        /// </summary>
+        /// <param name="res"></param>
+        private void RefreshUILiveTemplate(Bitmap res)
+        {
+            try
+            {
+                if (this.pictureBoxLiveImage.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate ()
+                    {
+                        RefreshUILiveTemplate(res);
+                    }));
+                }
+                else
+                {
+                    pictureBoxLiveImage.Image = res;
                     lblCurrentCoeff.Text = CurrentCoeff.ToString();
                     lblFoundX.Text = FoundTemplateX.ToString();
                     lblFoundY.Text = FoundTemplateY.ToString();
@@ -176,16 +202,23 @@ namespace Tron
         {
             try
             {
-                Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
-                //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead); // Image A
-                //Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead_female); // Image A
-                Image<Bgr, byte> res = FindTemplate(template, source);
+                Bitmap temp = (Bitmap)CurrentScreenshotWindow.Clone();
 
-                await Task.Run(() =>
+                Image<Bgr, byte> source = new Image<Bgr, byte>(temp);
+                //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.template_bobber_active); // Image A
+                //Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead_female); // Image A
+
+                Boolean bitten = false;
+                Image<Bgr, byte> res = FindTemplate(template, source, out bitten);
+
+                if (TemplateFound)
                 {
-                    RefreshUI(res.ToBitmap());
-                });
+                    await Task.Run(() =>
+                    {
+                        RefreshUIFoundTemplate(res.ToBitmap());
+                    });
+                }
 
             }
             catch (Exception ex)
@@ -196,52 +229,90 @@ namespace Tron
 
         /// <summary>
         /// Asynchroner Task zum analysieren des Processes
-        /// Macht Screenshots vom Process
+        /// Erstellt Screenshots vom Process, alle 10MS
         /// </summary>
-        private async void StartAnalyseProcessAsync()
+        private async void StartGetCurrentScreentshotAsync()
         {
             await Task.Run(async () =>
             {
                 while (true)
                 {
-                    CurrentScreenshot = AnalyzeCurrentProgress();
+                   
+                    // Bobber wurde noch nicht gefunden
+                    if(!TemplateFound)
+                    {
+                        CurrentScreenshotWindow = CurrentScreenshotFromScreen();
+                        RefreshUILiveTemplate(CurrentScreenshotWindow);
+                        AnalyseScreenshot();
+                    }
+                    else // Bobber wurde gefunden
+                    {
+                        CurrentScreenshotBobber = CurrentScreenshotFromBobber();
+                        RefreshUIFoundTemplate(CurrentScreenshotBobber);
+                        WaitForBite();
+
+                    }
+                    
                     await Task.Delay(10);
                 }
             });
 
         }
 
-        /// <summary>
-        /// Asynchroner Task zum Analysieren des aktuellen Screenshots
-        /// </summary>
-        private async void StartAnalyseScreenshotAsync()
+        private void WaitForBite()
         {
-            await Task.Run(async () =>
+            try
             {
-                while (true)
+                Boolean done = false;
+                while (!done)
                 {
-                    AnalyseScreenshot();
-                    await Task.Delay(20);
-                }
-            });
-        }
+                    Bitmap temp = (Bitmap)CurrentScreenshotBobber.Clone();
 
-        private async void SimulateClickAsync()
-        {
-            await Task.Run(async () =>
-            {
-                while (true)
-                {
-                    
-                    if(TemlateFound_Head)
+                    Image<Bgr, byte> source = new Image<Bgr, byte>(temp);
+                    //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
+                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.template_bite); // Image A
+
+                    Boolean bitten = false;
+                    Image<Bgr, byte> res = FindTemplate(template, source, out bitten);
+
+                    if (bitten)
                     {
-                        MoveMouseAndSimulateClick();
-                        
-                        await Task.Delay(5000);
+                        //MoveMouseAndSimulateClick();
+                        done = true;
                     }
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                this.WriteToLog(ex.Message);
+            }
         }
+
+        private Bitmap CurrentScreenshotFromScreen()
+        {
+            Bitmap bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+            Graphics graphics = Graphics.FromImage(bitmap as Image);
+
+            graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+
+            return bitmap;
+        }
+
+        private Bitmap CurrentScreenshotFromBobber()
+        {
+            Rectangle cropRect = new Rectangle(CalcedTemplateY, CalcedTemplateX, 180, 180);
+            Bitmap target = new Bitmap(cropRect.Width, cropRect.Height);
+
+            using (Graphics g = Graphics.FromImage(target))
+            {
+                g.DrawImage(CurrentScreenshotWindow, new Rectangle(0, 0, target.Width, target.Height),
+                                 cropRect,
+                                 GraphicsUnit.Pixel);
+            }
+
+            return target;
+        }
+
 
         private void MoveMouseAndSimulateClick()
         {
@@ -250,60 +321,14 @@ namespace Tron
                 Int32 oldMousePosX = CurrentMousePosX;
                 Int32 oldMousePosY = CurrentMousePosY;
 
-                //Helper.SetCursorPos((int)CalcedTemplateX, (int)CalcedTemplateY);
-                System.Threading.Thread.Sleep(100);
-                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN | User32.MOUSEEVENTF_LEFTUP, CalcedTemplateX, CalcedTemplateY, 0, 0);
-                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN | User32.MOUSEEVENTF_LEFTUP, FoundTemplateX, FoundTemplateY, 0, 0);
+                Helper.SetCursorPos((int)CalcedTemplateX, (int)CalcedTemplateY);
+                System.Threading.Thread.Sleep(1000);
+                Helper.mouse_event(Helper.MOUSEEVENTF_RIGHTDOWN | Helper.MOUSEEVENTF_RIGHTUP, CalcedTemplateX, CalcedTemplateY, 0, 0);
 
-                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTDOWN, CalcedTemplateX, CalcedTemplateY, 0, 0);
-                //System.Threading.Thread.Sleep(200);
-                //User32.mouse_event(Helper.MOUSEEVENTF_LEFTUP, CalcedTemplateX, CalcedTemplateY, 0, 0);
-                //System.Threading.Thread.Sleep(500);
-                //Helper.SetCursorPos(oldMousePosX, oldMousePosY);
-                ////WriteToLog("SimulatedMouseEvent");
-                ///
-
-                IntPtr hWnd = CurrentProcess.MainWindowHandle;
-
-
-
-                if ((int)hWnd > 0)
-                {
-                    SetForegroundWindow((int)hWnd);
-                    Thread.Sleep(100);
-                    //Helper.MouseMove(-9999, -9999);
-                    Thread.Sleep(100);
-                    Helper.MouseMove(CalcedTemplateX, CalcedTemplateY);
-                    //Helper.MouseMove(-641, 500);
-                    Thread.Sleep(150);
-                    Helper.ClickLeftMouseButtonDown();
-                    Thread.Sleep(150);
-                    Helper.ClickLeftMouseButtonUp();
-
-                    //    InputSimulator temp = new InputSimulator();
-                    //    temp.Mouse.MoveMouseBy(100, 100);
-                    //    temp.Mouse.Sleep(1);
-                }
-                else
-                {
-                    MessageBox.Show("Window Not Found!");
-                }
-                
-
-                Thread.Sleep(50);
-                //Helper.SetCursorPos(oldMousePosX, oldMousePosY);
+                Thread.Sleep(1000);
             });
-           
+
         }
-
-
-
-
-        /// <summary>
-        /// -------------------------------------------------------------------------------
-        /// ------------------------
-        /// -------------------------------------------------------------------------------
-        /// </summary>
 
 
         private void InvokeIfRequired(Control target, Delegate methodToInvoke)
@@ -325,9 +350,7 @@ namespace Tron
 
         private void BtnStartConnect_Click(object sender, EventArgs e)
         {
-            StartAnalyseProcessAsync();
-            StartAnalyseScreenshotAsync();
-            SimulateClickAsync();
+            StartGetCurrentScreentshotAsync();
         }
 
         private void listBoxProcess_DoubleClick(object sender, EventArgs e)
@@ -335,10 +358,11 @@ namespace Tron
             CurrentProcess = (Process)listBoxProcess.SelectedItem;
             ProcessHandlePointer = CurrentProcess.MainWindowHandle;
             textBoxLog.Text += "Ausgewählter Process: " + CurrentProcess.ProcessName + ", " + CurrentProcess.MainWindowTitle;
+            btnStartConnect.Enabled = true;
         }
 
 
-        private Image<Bgr, byte> FindTemplate(Image<Bgr, byte> template, Image<Bgr, byte> source)
+        private Image<Bgr, byte> FindTemplate(Image<Bgr, byte> template, Image<Bgr, byte> source, out Boolean bitten)
         {
             Image<Bgr, byte> imageToShow = source.Copy();
             using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
@@ -347,17 +371,15 @@ namespace Tron
                 Point[] minLocations, maxLocations;
                 result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
 
-
                 CurrentCoeff = maxValues[0];
                 // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
-                if (maxValues[0] > 0.77)
+                if (maxValues[0] > 0.80)
                 {
                     // This is a match. Do something with it, for example draw a rectangle around it.
                     Rectangle match = new Rectangle(maxLocations[0], template.Size);
                     imageToShow.Draw(match, new Bgr(Color.Red), 3);
                     FoundTemplateX = maxLocations[0].X;
                     FoundTemplateY = maxLocations[0].Y;
-
 
                     var rect = new Helper.Rect();
                     Helper.GetWindowRect(CurrentProcess.MainWindowHandle, ref rect);
@@ -369,17 +391,18 @@ namespace Tron
 
                     CalcedTemplateX = maxLocations[0].X + (template.Size.Width / 2) + OffSizeLeft;
                     CalcedTemplateY = maxLocations[0].Y + (template.Size.Height) + OffSizeTop;
-
-                    TemlateFound_Head = true;
+                    TemplateFound = true;
+                    bitten = true;
                 }
                 else
                 {
-                    TemlateFound_Head = false;
+                    TemplateFound = false;
+                    bitten = false;
                 }
             }
 
             return imageToShow;
         }
-      
+
     }
 }

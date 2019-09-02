@@ -159,6 +159,9 @@ namespace Tron
             public int bottom;
         }
 
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
+
         [DllImport("user32.dll")]
         static extern int GetWindowRgn(IntPtr hWnd, IntPtr hRgn);
 
@@ -185,17 +188,7 @@ namespace Tron
         internal static extern IntPtr SelectObject(IntPtr hdc, IntPtr bmp);
         [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
         internal static extern IntPtr DeleteObject(IntPtr hDc);
-
-
-
-
-
-
-
-
-
-
-
+                       
 
         public static Bitmap createBitmap(IntPtr hWnd, int heigth, int width)
         {
@@ -206,25 +199,22 @@ namespace Tron
             //int Width = 529;
             //int Height = 436;
 
-
             int Width = heigth;
             int Height = width;
-
 
             IntPtr hBitmap = CreateCompatibleBitmap(hdcFrom, Width, Height);
             if (hBitmap != IntPtr.Zero)
             {
                 // adjust and copy
                 IntPtr hLocalBitmap = SelectObject(hdcTo, hBitmap);
-                BitBlt(hdcTo, 0, 0, Width, Height,
-                    hdcFrom, 0, 0, SRCCOPY);
+                BitBlt(hdcTo, 0, 0, Width, Height, hdcFrom, 0, 0, SRCCOPY);
                 SelectObject(hdcTo, hLocalBitmap);
                 //We delete the memory device context.
                 DeleteDC(hdcTo);
                 //We release the screen device context.
                 ReleaseDC(hWnd, hdcFrom);
                 //Image is created by Image bitmap handle and assigned to Bitmap variable.
-                bmp = System.Drawing.Image.FromHbitmap(hBitmap);
+                bmp = Image.FromHbitmap(hBitmap);
                 //Delete the compatible bitmap object. 
                 DeleteObject(hBitmap);
                 //bmp.Save(@"C:\Users\ekaufmann\Desktop\screenys", ImageFormat.Bmp);

@@ -35,7 +35,7 @@
             this.textBoxLog = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnStartConnect = new System.Windows.Forms.Button();
-            this.pictureBoxFoundImage = new System.Windows.Forms.PictureBox();
+            this.pictureBoxLiveImage = new System.Windows.Forms.PictureBox();
             this.btnRightClick = new System.Windows.Forms.Button();
             this.labelMousePosX = new System.Windows.Forms.Label();
             this.labelMousePosY = new System.Windows.Forms.Label();
@@ -50,7 +50,10 @@
             this.lblCalcedPosY = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.lblCalcedPosX = new System.Windows.Forms.Label();
+            this.pictureBoxFoundImage = new System.Windows.Forms.PictureBox();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLiveImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).BeginInit();
             this.SuspendLayout();
             // 
@@ -78,7 +81,7 @@
             this.textBoxLog.Location = new System.Drawing.Point(145, 34);
             this.textBoxLog.Multiline = true;
             this.textBoxLog.Name = "textBoxLog";
-            this.textBoxLog.Size = new System.Drawing.Size(150, 252);
+            this.textBoxLog.Size = new System.Drawing.Size(150, 147);
             this.textBoxLog.TabIndex = 2;
             // 
             // label2
@@ -92,7 +95,8 @@
             // 
             // btnStartConnect
             // 
-            this.btnStartConnect.Location = new System.Drawing.Point(145, 292);
+            this.btnStartConnect.Enabled = false;
+            this.btnStartConnect.Location = new System.Drawing.Point(301, 34);
             this.btnStartConnect.Name = "btnStartConnect";
             this.btnStartConnect.Size = new System.Drawing.Size(150, 23);
             this.btnStartConnect.TabIndex = 4;
@@ -100,18 +104,18 @@
             this.btnStartConnect.UseVisualStyleBackColor = true;
             this.btnStartConnect.Click += new System.EventHandler(this.BtnStartConnect_Click);
             // 
-            // pictureBoxFoundImage
+            // pictureBoxLiveImage
             // 
-            this.pictureBoxFoundImage.Location = new System.Drawing.Point(301, 34);
-            this.pictureBoxFoundImage.Name = "pictureBoxFoundImage";
-            this.pictureBoxFoundImage.Size = new System.Drawing.Size(676, 546);
-            this.pictureBoxFoundImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBoxFoundImage.TabIndex = 8;
-            this.pictureBoxFoundImage.TabStop = false;
+            this.pictureBoxLiveImage.Location = new System.Drawing.Point(12, 225);
+            this.pictureBoxLiveImage.Name = "pictureBoxLiveImage";
+            this.pictureBoxLiveImage.Size = new System.Drawing.Size(676, 546);
+            this.pictureBoxLiveImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxLiveImage.TabIndex = 8;
+            this.pictureBoxLiveImage.TabStop = false;
             // 
             // btnRightClick
             // 
-            this.btnRightClick.Location = new System.Drawing.Point(145, 321);
+            this.btnRightClick.Location = new System.Drawing.Point(301, 63);
             this.btnRightClick.Name = "btnRightClick";
             this.btnRightClick.Size = new System.Drawing.Size(150, 23);
             this.btnRightClick.TabIndex = 9;
@@ -121,7 +125,7 @@
             // labelMousePosX
             // 
             this.labelMousePosX.AutoSize = true;
-            this.labelMousePosX.Location = new System.Drawing.Point(12, 203);
+            this.labelMousePosX.Location = new System.Drawing.Point(469, 34);
             this.labelMousePosX.Name = "labelMousePosX";
             this.labelMousePosX.Size = new System.Drawing.Size(67, 13);
             this.labelMousePosX.TabIndex = 10;
@@ -130,7 +134,7 @@
             // labelMousePosY
             // 
             this.labelMousePosY.AutoSize = true;
-            this.labelMousePosY.Location = new System.Drawing.Point(12, 225);
+            this.labelMousePosY.Location = new System.Drawing.Point(469, 56);
             this.labelMousePosY.Name = "labelMousePosY";
             this.labelMousePosY.Size = new System.Drawing.Size(67, 13);
             this.labelMousePosY.TabIndex = 11;
@@ -157,7 +161,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(552, 18);
+            this.label6.Location = new System.Drawing.Point(274, 209);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(46, 13);
             this.label6.TabIndex = 14;
@@ -235,11 +239,31 @@
             this.lblCalcedPosX.TabIndex = 19;
             this.lblCalcedPosX.Text = "XValue";
             // 
+            // pictureBoxFoundImage
+            // 
+            this.pictureBoxFoundImage.Location = new System.Drawing.Point(694, 225);
+            this.pictureBoxFoundImage.Name = "pictureBoxFoundImage";
+            this.pictureBoxFoundImage.Size = new System.Drawing.Size(676, 546);
+            this.pictureBoxFoundImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxFoundImage.TabIndex = 23;
+            this.pictureBoxFoundImage.TabStop = false;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(1011, 209);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(84, 13);
+            this.label4.TabIndex = 24;
+            this.label4.Text = "Found Template";
+            // 
             // TronForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1267, 592);
+            this.ClientSize = new System.Drawing.Size(1454, 822);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.pictureBoxFoundImage);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.lblCalcedPosY);
             this.Controls.Add(this.label8);
@@ -254,7 +278,7 @@
             this.Controls.Add(this.labelMousePosY);
             this.Controls.Add(this.labelMousePosX);
             this.Controls.Add(this.btnRightClick);
-            this.Controls.Add(this.pictureBoxFoundImage);
+            this.Controls.Add(this.pictureBoxLiveImage);
             this.Controls.Add(this.btnStartConnect);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.textBoxLog);
@@ -264,6 +288,7 @@
             this.Name = "TronForm";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLiveImage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -278,7 +303,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnStartConnect;
         private System.Windows.Forms.BindingSource bindingSource1;
-        private System.Windows.Forms.PictureBox pictureBoxFoundImage;
+        private System.Windows.Forms.PictureBox pictureBoxLiveImage;
         private System.Windows.Forms.Button btnRightClick;
         private System.Windows.Forms.Label labelMousePosX;
         private System.Windows.Forms.Label labelMousePosY;
@@ -293,6 +318,8 @@
         private System.Windows.Forms.Label lblCalcedPosY;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label lblCalcedPosX;
+        private System.Windows.Forms.PictureBox pictureBoxFoundImage;
+        private System.Windows.Forms.Label label4;
     }
 }
 
