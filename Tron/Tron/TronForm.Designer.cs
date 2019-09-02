@@ -117,7 +117,6 @@
             this.btnRightClick.TabIndex = 9;
             this.btnRightClick.Text = "Perform Right Click";
             this.btnRightClick.UseVisualStyleBackColor = true;
-            this.btnRightClick.Click += new System.EventHandler(this.btnRightClick_Click);
             // 
             // labelMousePosX
             // 

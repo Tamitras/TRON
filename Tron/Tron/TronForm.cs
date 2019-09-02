@@ -19,7 +19,6 @@ namespace Tron
 {
     public partial class TronForm : Form
     {
-
         public Boolean TemlateFound_Head { get; set; }
 
         /// <summary>
@@ -96,11 +95,20 @@ namespace Tron
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
-            //Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
+            Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
             //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
-            Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("talon")).ToList();
-            bindingSource1.DataSource = Processes;
-            listBoxProcess.DisplayMember = "ProcessName";
+            Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("Wow")).ToList();
+            //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("rag")).ToList();
+
+            if(Processes.Any())
+            {
+                bindingSource1.DataSource = Processes;
+                listBoxProcess.DisplayMember = "ProcessName";
+            }
+            else
+            {
+                return;
+            }            
         }
 
 
@@ -114,8 +122,8 @@ namespace Tron
                 //Bitmap btmp = Helper.createBitmap(ptr1, 640, 480);
                 // best capture for 640x480 resolution
 
-                return Helper.createBitmap(ProcessHandlePointer, 803, 603);
-
+                //return Helper.createBitmap(ProcessHandlePointer, 803, 603);
+                return Helper.createBitmap(ProcessHandlePointer, 1920, 1080);
             }
             catch (Exception ex)
             {
@@ -171,6 +179,7 @@ namespace Tron
                 Image<Bgr, byte> source = new Image<Bgr, byte>(CurrentScreenshot);
                 //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
                 Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead); // Image A
+                //Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead_female); // Image A
                 Image<Bgr, byte> res = FindTemplate(template, source);
 
                 await Task.Run(() =>
@@ -371,29 +380,6 @@ namespace Tron
 
             return imageToShow;
         }
-
       
-
-
-        private void btnRightClick_Click(object sender, EventArgs e)
-        {
-            // these are the pointer choords
-            //var w = (Y << 16) | X;
-            //Helper.SendMessage((int)ProcessHandlePointer, Helper.WM_RBUTTONDBLCLK, 0x00000001, w);
-
-        }
-
-
-        ///// <summary>
-        ///// Startet TalonRo in neuem Process und setzt diesen als ChildProcess
-        ///// </summary>
-        //private void StartAppInNewProcess()
-        //{
-        //    Process p = Process.Start(@"C:\Games\TalonRO\TalonPatch.exe");
-        //    Thread.Sleep(500);
-        //    p.WaitForInputIdle();
-        //    SetParent(p.MainWindowHandle, this.Handle);
-        //}
-
     }
 }
