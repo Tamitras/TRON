@@ -52,9 +52,14 @@
             this.lblCalcedPosX = new System.Windows.Forms.Label();
             this.pictureBoxFoundImage = new System.Windows.Forms.PictureBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.lblCoeff = new System.Windows.Forms.Label();
+            this.trackBarEmguType = new System.Windows.Forms.TrackBar();
+            this.btnReset = new System.Windows.Forms.Button();
+            this.btnEsc = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLiveImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarEmguType)).BeginInit();
             this.SuspendLayout();
             // 
             // listBoxProcess
@@ -106,7 +111,7 @@
             // 
             // pictureBoxLiveImage
             // 
-            this.pictureBoxLiveImage.Location = new System.Drawing.Point(12, 225);
+            this.pictureBoxLiveImage.Location = new System.Drawing.Point(12, 266);
             this.pictureBoxLiveImage.Name = "pictureBoxLiveImage";
             this.pictureBoxLiveImage.Size = new System.Drawing.Size(676, 546);
             this.pictureBoxLiveImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -121,6 +126,7 @@
             this.btnRightClick.TabIndex = 9;
             this.btnRightClick.Text = "Perform Right Click";
             this.btnRightClick.UseVisualStyleBackColor = true;
+            this.btnRightClick.Click += new System.EventHandler(this.BtnRightClick_Click);
             // 
             // labelMousePosX
             // 
@@ -143,7 +149,7 @@
             // lblCurrentCoeff
             // 
             this.lblCurrentCoeff.AutoSize = true;
-            this.lblCurrentCoeff.Location = new System.Drawing.Point(1072, 34);
+            this.lblCurrentCoeff.Location = new System.Drawing.Point(539, 100);
             this.lblCurrentCoeff.Name = "lblCurrentCoeff";
             this.lblCurrentCoeff.Size = new System.Drawing.Size(59, 13);
             this.lblCurrentCoeff.TabIndex = 12;
@@ -152,7 +158,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1000, 34);
+            this.label5.Location = new System.Drawing.Point(467, 100);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(69, 13);
             this.label5.TabIndex = 13;
@@ -161,7 +167,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(274, 209);
+            this.label6.Location = new System.Drawing.Point(274, 250);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(46, 13);
             this.label6.TabIndex = 14;
@@ -170,7 +176,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(1000, 58);
+            this.label7.Location = new System.Drawing.Point(467, 124);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(109, 13);
             this.label7.TabIndex = 16;
@@ -179,7 +185,7 @@
             // lblFoundX
             // 
             this.lblFoundX.AutoSize = true;
-            this.lblFoundX.Location = new System.Drawing.Point(1115, 58);
+            this.lblFoundX.Location = new System.Drawing.Point(582, 124);
             this.lblFoundX.Name = "lblFoundX";
             this.lblFoundX.Size = new System.Drawing.Size(41, 13);
             this.lblFoundX.TabIndex = 15;
@@ -188,7 +194,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(1000, 77);
+            this.label9.Location = new System.Drawing.Point(467, 143);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(109, 13);
             this.label9.TabIndex = 18;
@@ -197,7 +203,7 @@
             // lblFoundY
             // 
             this.lblFoundY.AutoSize = true;
-            this.lblFoundY.Location = new System.Drawing.Point(1115, 77);
+            this.lblFoundY.Location = new System.Drawing.Point(582, 143);
             this.lblFoundY.Name = "lblFoundY";
             this.lblFoundY.Size = new System.Drawing.Size(41, 13);
             this.lblFoundY.TabIndex = 17;
@@ -206,7 +212,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(1000, 124);
+            this.label3.Location = new System.Drawing.Point(467, 190);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(112, 13);
             this.label3.TabIndex = 22;
@@ -215,7 +221,7 @@
             // lblCalcedPosY
             // 
             this.lblCalcedPosY.AutoSize = true;
-            this.lblCalcedPosY.Location = new System.Drawing.Point(1115, 124);
+            this.lblCalcedPosY.Location = new System.Drawing.Point(582, 190);
             this.lblCalcedPosY.Name = "lblCalcedPosY";
             this.lblCalcedPosY.Size = new System.Drawing.Size(41, 13);
             this.lblCalcedPosY.TabIndex = 21;
@@ -224,7 +230,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(1000, 105);
+            this.label8.Location = new System.Drawing.Point(467, 171);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(112, 13);
             this.label8.TabIndex = 20;
@@ -233,7 +239,7 @@
             // lblCalcedPosX
             // 
             this.lblCalcedPosX.AutoSize = true;
-            this.lblCalcedPosX.Location = new System.Drawing.Point(1115, 105);
+            this.lblCalcedPosX.Location = new System.Drawing.Point(582, 171);
             this.lblCalcedPosX.Name = "lblCalcedPosX";
             this.lblCalcedPosX.Size = new System.Drawing.Size(41, 13);
             this.lblCalcedPosX.TabIndex = 19;
@@ -241,7 +247,7 @@
             // 
             // pictureBoxFoundImage
             // 
-            this.pictureBoxFoundImage.Location = new System.Drawing.Point(694, 225);
+            this.pictureBoxFoundImage.Location = new System.Drawing.Point(694, 266);
             this.pictureBoxFoundImage.Name = "pictureBoxFoundImage";
             this.pictureBoxFoundImage.Size = new System.Drawing.Size(676, 546);
             this.pictureBoxFoundImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -251,17 +257,59 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1011, 209);
+            this.label4.Location = new System.Drawing.Point(1011, 250);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(84, 13);
             this.label4.TabIndex = 24;
             this.label4.Text = "Found Template";
+            // 
+            // lblCoeff
+            // 
+            this.lblCoeff.AutoSize = true;
+            this.lblCoeff.Location = new System.Drawing.Point(326, 250);
+            this.lblCoeff.Name = "lblCoeff";
+            this.lblCoeff.Size = new System.Drawing.Size(56, 13);
+            this.lblCoeff.TabIndex = 25;
+            this.lblCoeff.Text = "Coeffizient";
+            // 
+            // trackBarEmguType
+            // 
+            this.trackBarEmguType.Location = new System.Drawing.Point(12, 190);
+            this.trackBarEmguType.Maximum = 6;
+            this.trackBarEmguType.Name = "trackBarEmguType";
+            this.trackBarEmguType.Size = new System.Drawing.Size(439, 45);
+            this.trackBarEmguType.TabIndex = 26;
+            this.trackBarEmguType.Scroll += new System.EventHandler(this.TrackBarEmguType_Scroll);
+            // 
+            // btnReset
+            // 
+            this.btnReset.Location = new System.Drawing.Point(778, 100);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(238, 23);
+            this.btnReset.TabIndex = 27;
+            this.btnReset.Text = "Klick Hilfe";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
+            // btnEsc
+            // 
+            this.btnEsc.Location = new System.Drawing.Point(778, 76);
+            this.btnEsc.Name = "btnEsc";
+            this.btnEsc.Size = new System.Drawing.Size(238, 23);
+            this.btnEsc.TabIndex = 28;
+            this.btnEsc.Text = "Klick ESC";
+            this.btnEsc.UseVisualStyleBackColor = true;
+            this.btnEsc.Click += new System.EventHandler(this.btnEsc_Click);
             // 
             // TronForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1454, 822);
+            this.Controls.Add(this.btnEsc);
+            this.Controls.Add(this.btnReset);
+            this.Controls.Add(this.trackBarEmguType);
+            this.Controls.Add(this.lblCoeff);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.pictureBoxFoundImage);
             this.Controls.Add(this.label3);
@@ -290,6 +338,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLiveImage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxFoundImage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarEmguType)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -320,6 +369,10 @@
         private System.Windows.Forms.Label lblCalcedPosX;
         private System.Windows.Forms.PictureBox pictureBoxFoundImage;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label lblCoeff;
+        private System.Windows.Forms.TrackBar trackBarEmguType;
+        private System.Windows.Forms.Button btnReset;
+        private System.Windows.Forms.Button btnEsc;
     }
 }
 

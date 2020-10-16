@@ -37,6 +37,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CoreAudioApi">
+      <HintPath>Resources\CoreAudioApi.dll</HintPath>
+    </Reference>
     <Reference Include="Emgu.CV.UI, Version=3.4.3.3016, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
       <HintPath>..\packages\EMGU.CV.3.4.3.3016\lib\net35\Emgu.CV.UI.dll</HintPath>
     </Reference>
@@ -64,11 +67,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\Ears.cs" />
+    <Compile Include="Classes\LimitedCollection.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="RECT.cs" />
     <Compile Include="TronForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -100,9 +106,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="License-LGPL.txt" />
-    <None Include="Resources\template_bobber_active_2.JPG" />
-    <None Include="Resources\template_bite.jpg" />
-    <None Include="Resources\template_bobber_active.jpg" />
+    <None Include="Resources\unstuck.png" />
+    <None Include="Resources\hilfe_large2.png" />
+    <None Include="Resources\hilfe_large3.png" />
+    <None Include="Resources\hilfe_large.png" />
+    <None Include="Resources\hilfe.png" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Ressourcen\" />

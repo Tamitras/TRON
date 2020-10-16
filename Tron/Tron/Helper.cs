@@ -88,31 +88,21 @@ namespace Tron
             public IntPtr dwExtraInfo;
         }
 
-        public static void MouseMove(int dx, int dy)
+
+        public static int MakeLParam(int x, int y) => (y << 16) | (x & 0xFFFF);
+
+        public static void LeftMouseClick(int x, int y, IntPtr windowHandle)
         {
-            INPUT mouseMove = new INPUT();
-            mouseMove.type = SendInputEventType.InputMouse;
-            mouseMove.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_MOVE;
-            mouseMove.mkhi.mi.dx = dx;
-            mouseMove.mkhi.mi.dy = dy;
-            SendInput(1, ref mouseMove, Marshal.SizeOf(new INPUT()));
+            const int WM_LBUTTONDOWN = 0x0201;
+            const int WM_LBUTTONUP = 0x0202;
+
+            Task.Run(() =>
+            {
+                PostMessage(windowHandle, WM_LBUTTONDOWN, (IntPtr)0, (IntPtr)MakeLParam(x, y));
+                PostMessage(windowHandle, WM_LBUTTONUP, (IntPtr)1, (IntPtr)MakeLParam(x, y));
+            });
         }
 
-        public static void ClickLeftMouseButtonDown()
-        {
-            INPUT mouseDownInput = new INPUT();
-            mouseDownInput.type = SendInputEventType.InputMouse;
-            mouseDownInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_LEFTDOWN;
-            SendInput(1, ref mouseDownInput, Marshal.SizeOf(new INPUT()));
-        }
-
-        public static void ClickLeftMouseButtonUp()
-        {
-            INPUT mouseUpInput = new INPUT();
-            mouseUpInput.type = SendInputEventType.InputMouse;
-            mouseUpInput.mkhi.mi.dwFlags = MouseEventFlags.MOUSEEVENT_LEFTUP;
-            SendInput(1, ref mouseUpInput, Marshal.SizeOf(new INPUT()));
-        }
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern uint SendInput(uint nInputs, ref INPUT pInputs, int cbSize);
@@ -121,7 +111,12 @@ namespace Tron
         public static extern bool SetCursorPos(int X, int Y);
 
         [DllImport("user32.dll")]
-        static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        public static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+
 
         [DllImportAttribute("User32.dll")]
         public static extern IntPtr SetForegroundWindow(int hWnd);
@@ -167,6 +162,9 @@ namespace Tron
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool GetWindowRect(IntPtr hWnd, ref Rect Rect);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
         public const int SRCCOPY = 13369376;
         public const int WM_CLICK = 0x00F5;

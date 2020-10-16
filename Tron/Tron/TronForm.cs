@@ -14,6 +14,8 @@ using Gma.System.MouseKeyHook;
 using static Tron.Helper;
 using System.Threading.Tasks;
 using WindowsInput;
+using CoreAudioApi;
+using Tron.Classes;
 
 namespace Tron
 {
@@ -59,6 +61,15 @@ namespace Tron
 
         Int32 CurrentMousePosX { get; set; }
         Int32 CurrentMousePosY { get; set; }
+        public int CoeffType { get; private set; }
+
+        ///  average
+        private int _aFishWait;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly Ears _ears;
 
 
         /// <summary>
@@ -87,7 +98,10 @@ namespace Tron
 
         private void WriteToLog(String text)
         {
-            //this.textBoxLog.Text += DateTime.Now.ToLongTimeString() + ": " + text + Environment.NewLine;
+            BeginInvoke(new MethodInvoker(delegate ()
+            {
+                this.textBoxLog.Text += DateTime.Now.ToLongTimeString() + ": " + text + Environment.NewLine;
+            }));
         }
 
         /// <summary>
@@ -96,7 +110,7 @@ namespace Tron
         public void Initialize()
         {
             // Filtern nach name (sortby c=> c.name) etc.
-            Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
+            //Processes = Process.GetProcesses().OrderBy(c => c.ProcessName).ToList();
             //Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("notepad")).ToList();
             Processes = Process.GetProcesses().Where(c => c.ProcessName.Contains("Wow")).ToList();
 
@@ -110,7 +124,6 @@ namespace Tron
                 return;
             }
         }
-
 
         /// <summary>
         /// Liefert den aktuellen Bildausschnitt
@@ -159,6 +172,28 @@ namespace Tron
             }
         }
 
+        private void RefreshDebug()
+        {
+            try
+            {
+                if (this.lblCoeff.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate ()
+                    {
+                        RefreshDebug();
+                    }));
+                }
+                else
+                {
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
         /// <summary>
         /// Aktualisiert die PicutreBox
         /// </summary>
@@ -177,7 +212,6 @@ namespace Tron
                 else
                 {
                     pictureBoxLiveImage.Image = res;
-                    lblCurrentCoeff.Text = CurrentCoeff.ToString();
                     lblFoundX.Text = FoundTemplateX.ToString();
                     lblFoundY.Text = FoundTemplateY.ToString();
 
@@ -194,7 +228,6 @@ namespace Tron
             }
         }
 
-
         /// <summary>
         /// Analysiert den aktuellen Screenshot und vergleicht diesen mit einem template
         /// </summary>
@@ -206,17 +239,23 @@ namespace Tron
 
                 Image<Bgr, byte> source = new Image<Bgr, byte>(temp);
                 //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.template_bobber_active); // Image A
-                //Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.templateHead_female); // Image A
+                Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.hilfe_large); // Image A
 
                 Boolean bitten = false;
-                Image<Bgr, byte> res = FindTemplate(template, source, out bitten);
+                Image<Bgr, byte> res = this.FindTemplate(template, source, out bitten);
+
+                var x = (CurrentScreenshotWindow.Width / 2) - 200;
+                var y = (CurrentScreenshotWindow.Height / 2) - 200;
 
                 if (TemplateFound)
                 {
+                    Rectangle cropRect = new Rectangle(x, y, 400, 400);
+                    var croppedRes = this.CropImage(res.Bitmap, cropRect);
+
                     await Task.Run(() =>
                     {
-                        RefreshUIFoundTemplate(res.ToBitmap());
+                        //RefreshUIFoundTemplate(res.ToBitmap());
+                        RefreshUIFoundTemplate(croppedRes);
                     });
                 }
 
@@ -227,73 +266,58 @@ namespace Tron
             }
         }
 
+        private Bitmap CropImage(Image img, Rectangle cropArea)
+        {
+            Bitmap bmpImage = new Bitmap(img);
+            return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
+        }
+
         /// <summary>
         /// Asynchroner Task zum analysieren des Processes
         /// Erstellt Screenshots vom Process, alle 10MS
         /// </summary>
         private async void StartGetCurrentScreentshotAsync()
         {
-            await Task.Run(async () =>
-            {
-                while (true)
-                {
-                   
-                    // Bobber wurde noch nicht gefunden
-                    if(!TemplateFound)
-                    {
-                        CurrentScreenshotWindow = CurrentScreenshotFromScreen();
-                        RefreshUILiveTemplate(CurrentScreenshotWindow);
-                        AnalyseScreenshot();
-                    }
-                    else // Bobber wurde gefunden
-                    {
-                        CurrentScreenshotBobber = CurrentScreenshotFromBobber();
-                        RefreshUIFoundTemplate(CurrentScreenshotBobber);
-                        WaitForBite();
-
-                    }
-                    
-                    await Task.Delay(10);
-                }
-            });
-
-        }
-
-        private void WaitForBite()
-        {
             try
             {
-                Boolean done = false;
-                while (!done)
-                {
-                    Bitmap temp = (Bitmap)CurrentScreenshotBobber.Clone();
+                _ = Task.Run(() =>
+                  {
+                      while (true)
+                      {
+                          CurrentScreenshotWindow = CurrentScreenshotFromScreen();
+                          RefreshUILiveTemplate(CurrentScreenshotWindow);
+                          AnalyseScreenshot();
 
-                    Image<Bgr, byte> source = new Image<Bgr, byte>(temp);
-                    //Image<Bgr, byte> template = new Image<Bgr, byte>("C:/Users/ekaufmann/Desktop/screenys/theme.bmp"); // Image A
-                    Image<Bgr, byte> template = new Image<Bgr, byte>(Properties.Resources.template_bite); // Image A
-
-                    Boolean bitten = false;
-                    Image<Bgr, byte> res = FindTemplate(template, source, out bitten);
-
-                    if (bitten)
-                    {
-                        //MoveMouseAndSimulateClick();
-                        done = true;
-                    }
-                }
+                          Task.Delay(500);
+                      }
+                  });
             }
             catch (Exception ex)
             {
-                this.WriteToLog(ex.Message);
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
 
         private Bitmap CurrentScreenshotFromScreen()
         {
-            Bitmap bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+            //Bitmap bitmap = new Bitmap(1000, 800);
+
+            var rect = new Helper.Rect();
+            Helper.GetWindowRect(CurrentProcess.MainWindowHandle, ref rect);
+
+
+            var width = rect.right - rect.left;
+            var height = rect.bottom - rect.top;
+
+            //Bitmap bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+            Bitmap bitmap = new Bitmap(width, height);
             Graphics graphics = Graphics.FromImage(bitmap as Image);
 
-            graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+            //graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+            //graphics.CopyFromScreen(rect.left, rect.top, width, height, bitmap.Size);
+            graphics.CopyFromScreen(rect.left, rect.top, 0, 0, bitmap.Size);
+            graphics.Dispose();
 
             return bitmap;
         }
@@ -365,44 +389,125 @@ namespace Tron
         private Image<Bgr, byte> FindTemplate(Image<Bgr, byte> template, Image<Bgr, byte> source, out Boolean bitten)
         {
             Image<Bgr, byte> imageToShow = source.Copy();
-            using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
+            bitten = false;
+            switch (CoeffType)
             {
-                double[] minValues, maxValues;
-                Point[] minLocations, maxLocations;
-                result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+                case 0:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcoeffNormed))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
+                case 1:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.Ccoeff))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
+                case 2:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.Ccorr))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
+                case 3:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.CcorrNormed))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
+                case 4:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.Sqdiff))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
+                case 5:
+                    using (Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TemplateMatchingType.SqdiffNormed))
+                    {
+                        CalculateTemplateCoeff(template, imageToShow, result);
+                    }
+                    break;
 
-                CurrentCoeff = maxValues[0];
-                // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
-                if (maxValues[0] > 0.80)
-                {
-                    // This is a match. Do something with it, for example draw a rectangle around it.
-                    Rectangle match = new Rectangle(maxLocations[0], template.Size);
-                    imageToShow.Draw(match, new Bgr(Color.Red), 3);
-                    FoundTemplateX = maxLocations[0].X;
-                    FoundTemplateY = maxLocations[0].Y;
-
-                    var rect = new Helper.Rect();
-                    Helper.GetWindowRect(CurrentProcess.MainWindowHandle, ref rect);
-
-                    OffSizeLeft = rect.left;
-                    OffSizeTop = rect.top;
-                    int width = rect.right - rect.left;
-                    int height = rect.bottom - rect.top;
-
-                    CalcedTemplateX = maxLocations[0].X + (template.Size.Width / 2) + OffSizeLeft;
-                    CalcedTemplateY = maxLocations[0].Y + (template.Size.Height) + OffSizeTop;
-                    TemplateFound = true;
-                    bitten = true;
-                }
-                else
-                {
-                    TemplateFound = false;
-                    bitten = false;
-                }
+                default:
+                    break;
             }
+
+
 
             return imageToShow;
         }
 
+        private void CalculateTemplateCoeff(Image<Bgr, byte> template, Image<Bgr, byte> imageToShow, Image<Gray, float> result)
+        {
+            double[] minValues, maxValues;
+            Point[] minLocations, maxLocations;
+            result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+            CurrentCoeff = maxValues[0];
+
+            BeginInvoke(new MethodInvoker(delegate ()
+            {
+                this.lblCurrentCoeff.Text = CurrentCoeff.ToString();
+            }
+            ));
+
+            // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
+            if (maxValues[0] > 0.95)
+            {
+                FoundTemplateX = maxLocations[0].X;
+                FoundTemplateY = maxLocations[0].Y;
+
+                // This is a match. Do something with it, for example draw a rectangle around it.
+                Rectangle match = new Rectangle(maxLocations[0], template.Size);
+                imageToShow.Draw(match, new Bgr(Color.Yellow), 2);
+                imageToShow.Draw($"Coeff: {CurrentCoeff}", new Point(match.X -70, match.Y -50), Emgu.CV.CvEnum.FontFace.HersheyComplex, 0.4, new Bgr(Color.Blue));
+                imageToShow.Draw($"X: {FoundTemplateX}", new Point(match.X - 70, match.Y -65), Emgu.CV.CvEnum.FontFace.HersheyComplex, 0.4, new Bgr(Color.Blue));
+                imageToShow.Draw($"Y: {FoundTemplateY}", new Point(match.X - 70, match.Y - 80), Emgu.CV.CvEnum.FontFace.HersheyComplex, 0.4, new Bgr(Color.Blue));
+
+                var rect = new Helper.Rect();
+                Helper.GetWindowRect(CurrentProcess.MainWindowHandle, ref rect);
+
+                OffSizeLeft = rect.left;
+                OffSizeTop = rect.top;
+                int width = rect.right - rect.left;
+                int height = rect.bottom - rect.top;
+
+                CalcedTemplateX = maxLocations[0].X + (template.Size.Width / 2) + OffSizeLeft;
+                CalcedTemplateY = maxLocations[0].Y + (template.Size.Height) + OffSizeTop;
+
+                var center = new PointF(match.Left + match.Width / 2, match.Top + match.Height / 2);
+                Ellipse ellipse = new Ellipse(center, new SizeF(1, 1), 0);
+                imageToShow.Draw(ellipse, new Bgr(Color.Magenta), 3);
+
+                TemplateFound = true;
+            }
+            else
+            {
+                TemplateFound = false;
+            }
+
+        }
+
+        private void TrackBarEmguType_Scroll(object sender, EventArgs e)
+        {
+            CoeffType = this.trackBarEmguType.Value;
+        }
+
+        private void BtnRightClick_Click(object sender, EventArgs e)
+        {
+            MoveMouseAndSimulateClick();
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            // offset 18-25 allowed
+            Helper.LeftMouseClick(this.FoundTemplateX, this.FoundTemplateY - 25, CurrentProcess.MainWindowHandle);
+        }
+
+        private void btnEsc_Click(object sender, EventArgs e)
+        {
+            PostMessage(CurrentProcess.MainWindowHandle, WM_KEYDOWN, (IntPtr)Keys.Escape, IntPtr.Zero);
+        }
     }
 }
